@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Freer</title>
+    <link rel="icon" href="https://avatars1.githubusercontent.com/u/17234211">
+    <link rel="stylesheet" type="text/css" href="fw/github.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/googlecode.min.css">
+    <link rel="stylesheet" type="text/css" href="https://storage.googleapis.com/app.klipse.tech/css/codemirror.css">
+    <link rel="stylesheet" type="text/css" href="fw/styles.css">
+    <script type="text/javascript">startTime = Date.now()</script>
+    <script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create','UA-52808982-2','auto');ga('send','pageview');</script>
+  </head>
+  <body class="markdown-body">
+    <div class="loading-message">
+      Please wait... The interactive code snippets on this page take a moment to render.
+    </div>
+    <div class="menu">
+      <div class="menu-overlay"></div>
+      <div class="menu-body">
+        <div class="menu-side">
+          <div>≡</div>
+          <a id="to-top" href="#" onclick="">▲</a>
+        </div>
+        <div class="menu-contents"></div>
+      </div>
+    </div>
+    <p>
+      All the code snippets on this page are <b>live</b> and <b>interactive</b>
+      powered by the <a target="_blank" href="https://github.com/viebel/klipse">klipse
+      plugin</a>.
+    </p>
+    <hr>
+    <h1><a id="freer"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#">■</a> <a href="#freer">Freer</a> &middot; <a href="https://gitter.im/calmm-js/chat"><img src="https://img.shields.io/gitter/room/calmm-js/chat.js.svg" alt="Gitter"></a> <a href="https://github.com/calmm-js/freer"><img src="https://img.shields.io/github/stars/calmm-js/freer.svg?style=social" alt="GitHub stars"></a> <a href="https://www.npmjs.com/package/freer"><img src="https://img.shields.io/npm/dm/freer.svg" alt="npm"></a></h1>
+<p>This is an <em>experimental</em> JavaScript library that implements a Free (or Freer)
+monad with composable effect handlers.</p>
+<p><strong>WARNING:</strong> This library is not yet ready for production use.</p>
+<p><a href="http://badge.fury.io/js/freer"><img src="https://badge.fury.io/js/freer.svg" alt="npm version"></a>
+<a href="https://travis-ci.org/calmm-js/freer"><img src="https://travis-ci.org/calmm-js/freer.svg?branch=master" alt="Build Status"></a>
+<a href="https://codecov.io/github/calmm-js/freer?branch=master"><img src="https://img.shields.io/codecov/c/github/calmm-js/freer/master.svg" alt="Code Coverage"></a>
+<a href="https://david-dm.org/calmm-js/freer"><img src="https://david-dm.org/calmm-js/freer.svg" alt=""></a>
+<a href="https://david-dm.org/calmm-js/freer?type=dev"><img src="https://david-dm.org/calmm-js/freer/dev-status.svg" alt=""></a></p>
+<h2><a id="contents"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#contents">■</a> <a href="#contents">Contents</a></h2>
+<ul>
+<li><a href="#examples">Examples</a><ul>
+<li><a href="#getting-started">Getting started</a></li>
+<li><a href="#running-sum-of-leaves">Running sum of leaves</a></li>
+</ul>
+</li>
+<li><a href="#reference">Reference</a><ul>
+<li><a href="#free-monad">Free monad</a><ul>
+<li><a href="#F-Free"><code>F.Free ~&gt; monad</code></a></li>
+</ul>
+</li>
+<li><a href="#free-combinators">Free combinators</a><ul>
+<li><a href="#F-map"><code>F.map(value =&gt; value, free) ~&gt; free</code></a></li>
+<li><a href="#F-of"><code>F.of(value) ~&gt; free</code></a></li>
+<li><a href="#F-ap"><code>F.ap(free, free) ~&gt; free</code></a></li>
+<li><a href="#F-chain"><code>F.chain(value =&gt; free, free) ~&gt; free</code></a></li>
+</ul>
+</li>
+<li><a href="#identity-handler">Identity handler</a><ul>
+<li><a href="#F-run"><code>F.run(free) ~&gt; value</code></a></li>
+<li><a href="#F-runAsync"><code>F.runAsync(free) ~&gt; promise</code></a></li>
+</ul>
+</li>
+<li><a href="#do-notation">Do notation</a><ul>
+<li><a href="#F-from"><code>F.from(async $ =&gt; { ... await $(free) ... }) ~&gt; free</code></a></li>
+<li><a href="#F-toAsync"><code>F.toAsync(free) ~&gt; free</code></a></li>
+</ul>
+</li>
+<li><a href="#defining-new-handlers">Defining new handlers</a><ul>
+<li><a href="#F-handler"><code>F.handler((value, any) =&gt; free, (effect, continuation, any) =&gt; free) ~&gt; (free, any) ~&gt; free</code></a></li>
+</ul>
+</li>
+<li><a href="#handlers-a-la-carte">Handlers à la carte</a><ul>
+<li><a href="#F-Reader"><code>F.Reader() ~&gt; {ask, local, run}</code></a></li>
+<li><a href="#F-State"><code>F.State() ~&gt; {get, put, modify, run}</code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#related-work">Related work</a></li>
+</ul>
+<h2><a id="examples"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#examples">■</a> <a href="#examples">Examples</a></h2>
+<h3><a id="getting-started"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#getting-started">■</a> <a href="#getting-started">Getting started</a></h3>
+<p>First we create some handlers and free operations:</p>
+<pre><code class="hljs lang-js">var aReader = F.Reader()
+var aState = F.State()</code></pre>
+<p>Then we define an ad-hoc operation that uses the previously defined free
+operations:</p>
+<pre><code class="hljs lang-js">var addReaderToState = F.from(async $ =&gt; {
+  const v = await $(aReader.ask)
+  return $(aState.modify(R.add(v)))
+})</code></pre>
+<p>The above uses a <a href="#do-notation"><code>do</code> notation</a> approximation provided by this
+library.  One could also define the above operation using just the basic
+<a href="#free-combinators">monadic combitors</a>.</p>
+<p>Then we compose a runner that handles the operations we used:</p>
+<pre><code class="hljs lang-js">var aRunner = R.compose(F.runAsync, aState.run(1), aReader.run(2), F.toAsync)</code></pre>
+<p>Finally we run the operation and log the result:</p>
+<pre><code class="hljs lang-js">aRunner(addReaderToState).then(console.log)
+</code></pre>
+<h3><a id="running-sum-of-leaves"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#running-sum-of-leaves">■</a> <a href="#running-sum-of-leaves">Running sum of leaves</a></h3>
+<p>Here is an example using
+<a href="https://github.com/calmm-js/partial.lenses/#L-traverse"><code>traverse</code></a> from
+Partial Lenses to compute a running sum of the leaves of a nested data
+structure:</p>
+<pre><code class="hljs lang-js">R.compose(F.run, aState.run(0))(
+  L.traverse(
+    F.Free,
+    x =&gt; aState.modify(R.add(x)),
+    L.leafs,
+    [{x: 3, y: [1]}, {z: [4, 1]}]
+  )
+)
+</code></pre>
+<h2><a id="reference"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#reference">■</a> <a href="#reference">Reference</a></h2>
+<p>The <a href="https://wiki.haskell.org/Combinator">combinators</a> provided by this library
+are provided as named exports.  Typically one just imports the library as:</p>
+<pre><code class="hljs lang-jsx">import * as F from &#39;freer</code></pre>
+<p>The examples also make use of the <a href="https://github.com/calmm-js/partial.lenses/">Partial
+Lenses</a> and
+<a href="https://github.com/calmm-js/partial.lenses/">Ramda</a> libraries imported as:</p>
+<pre><code class="hljs lang-jsx">import * as L from &#39;partial.lenses&#39;
+import * as R from &#39;ramda&#39;</code></pre>
+<p>Neither of those libraries is required in order to use the library.</p>
+<h3><a id="free-monad"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#free-monad">■</a> <a href="#free-monad">Free monad</a></h3>
+<h4><a id="F-Free"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-Free">■</a> <a href="#F-Free"><code>F.Free ~&gt; monad</code></a></h4>
+<p><code>F.Free</code> is the <a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md">Static
+Land</a>
+compatible
+<a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md#monad"><code>Monad</code></a>
+definition for the
+<a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md#monad">monad</a>
+provided by this library.</p>
+<h3><a id="free-combinators"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#free-combinators">■</a> <a href="#free-combinators">Free combinators</a></h3>
+<h4><a id="F-map"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-map">■</a> <a href="#F-map"><code>F.map(value =&gt; value, free) ~&gt; free</code></a></h4>
+<p><code>F.map</code> is the <a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md">Static
+Land</a>
+compatible
+<a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md#functor"><code>map</code></a>
+combinator of the
+<a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md#monad">monad</a>
+provided by this library.</p>
+<h4><a id="F-of"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-of">■</a> <a href="#F-of"><code>F.of(value) ~&gt; free</code></a></h4>
+<p><code>F.of</code> is the <a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md">Static
+Land</a>
+compatible
+<a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md#applicative"><code>of</code></a>
+combinator of the
+<a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md#monad">monad</a>
+provided by this library.</p>
+<h4><a id="F-ap"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-ap">■</a> <a href="#F-ap"><code>F.ap(free, free) ~&gt; free</code></a></h4>
+<p><code>F.ap</code> is the <a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md">Static
+Land</a>
+compatible
+<a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md#apply"><code>ap</code></a>
+combinator of the
+<a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md#monad">monad</a>
+provided by this library.</p>
+<h4><a id="F-chain"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-chain">■</a> <a href="#F-chain"><code>F.chain(value =&gt; free, free) ~&gt; free</code></a></h4>
+<p><code>F.chain</code> is the <a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md">Static
+Land</a>
+compatible
+<a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md#chain"><code>chain</code></a>
+combinator of the monad provided by this library.</p>
+<h3><a id="identity-handler"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#identity-handler">■</a> <a href="#identity-handler">Identity handler</a></h3>
+<h4><a id="F-run"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-run">■</a> <a href="#F-run"><code>F.run(free) ~&gt; value</code></a></h4>
+<p><code>F.run</code> is the identity handler for the free monad.  It doesn&#39;t handle any
+effects per se, it just extracts the result of the computation.</p>
+<h4><a id="F-runAsync"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-runAsync">■</a> <a href="#F-runAsync"><code>F.runAsync(free) ~&gt; promise</code></a></h4>
+<p><code>F.runAsync</code> is the asynchronous identity handler for the free monad.  It only
+handles promises.</p>
+<h3><a id="do-notation"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#do-notation">■</a> <a href="#do-notation">Do notation</a></h3>
+<h4><a id="F-from"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-from">■</a> <a href="#F-from"><code>F.from(async $ =&gt; { ... await $(free) ... }) ~&gt; free</code></a></h4>
+<p><code>F.from</code> is used to wrap an <code>async $ =&gt; { ... }</code> function that <code>await $( ... )</code>s
+for effects, reminescent to a <a href="https://en.wikibooks.org/wiki/Haskell/do_notation"><code>do</code>
+notation</a>, as a free
+operation to be handled by <a href="#F-toAsync"><code>F.toAsync</code></a>.</p>
+<h4><a id="F-toAsync"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-toAsync">■</a> <a href="#F-toAsync"><code>F.toAsync(free) ~&gt; free</code></a></h4>
+<p><code>F.toAsync</code> is the handler for the operations produced by <a href="#F-from"><code>F.from</code></a>
+and converts those effects to promises.  This handler must be before handlers
+for effects used in the operations produced by <a href="#F-from"><code>F.from</code></a> and the
+promises need to be handled by <a href="#F-runAsync"><code>F.runAsync</code></a>.  In other words, the
+handler composition should look like <code>R.compose(F.runAsync, ..., F.toAsync)</code>.</p>
+<h3><a id="defining-new-handlers"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#defining-new-handlers">■</a> <a href="#defining-new-handlers">Defining new handlers</a></h3>
+<h4><a id="F-handler"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-handler">■</a> <a href="#F-handler"><code>F.handler((value, any) =&gt; free, (effect, continuation, any) =&gt; free) ~&gt; (free[, any]) ~&gt; free</code></a></h4>
+<p><code>F.handler</code> defines a handler for some effects.  The first argument is the
+handler for the final result.  The second argument is the handler for some
+effects.  It is given an effect, which the handler may or many not know how to
+handle, and the continuation and it must then return a free operation.</p>
+<h3><a id="handlers-a-la-carte"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#handlers-a-la-carte">■</a> <a href="#handlers-a-la-carte">Handlers à la carte</a></h3>
+<h4><a id="F-Reader"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-Reader">■</a> <a href="#F-Reader"><code>F.Reader() ~&gt; {ask, local, run}</code></a></h4>
+<p><code>F.Reader</code> is a factory for Reader effects.</p>
+<h4><a id="F-State"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-State">■</a> <a href="#F-State"><code>F.State() ~&gt; {get, put, modify, run}</code></a></h4>
+<p><code>F.State</code> is a factory for State effects.</p>
+<h2><a id="related-work"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#reference">■</a> <a href="#related-work">Related work</a></h2>
+<p>The core of this library is based on ideas from <a href="http://okmij.org/ftp/Haskell/extensible/">Extensible Effects: an
+alternative to Monad Transformers</a>.</p>
+
+    <div class="loading-hidden">
+      <pre><code class="hljs lang-js">
+        document.querySelector('.loading-message').className = "loading-hidden";
+        ga('send', 'event', 'completed', 'load', Math.round((Date.now() - startTime)/1000));
+        accelerate_klipse();
+      </code></pre>
+    </div>
+    <script type="text/javascript" src="https://unpkg.com/babel-polyfill/dist/polyfill.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/infestines/dist/infestines.js"></script>
+    <script type="text/javascript" src="freer.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/partial.lenses/dist/partial.lenses.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/ramda/dist/ramda.min.js"></script>
+    <script type="text/javascript" src="setup.js"></script>
+    <script type="text/javascript" src="fw/klipse-settings.js"></script>
+    <script type="text/javascript" src="https://storage.googleapis.com/app.klipse.tech/plugin_prod/js/klipse_plugin.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/javascript.min.js"></script>
+    <script type="text/javascript" src="fw/init-hljs.js"></script>
+    <script type="text/javascript" src="fw/menu.js"></script>
+    <script type="text/javascript" src="fw/tooltips.js"></script>
+    <script type="text/javascript" src="fw/clicks-to-ga.js"></script>
+  </body>
+</html>

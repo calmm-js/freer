@@ -1,0 +1,15 @@
+*~
+.babelrc
+.eslintrc
+.nyc_output
+.prettierrc
+.travis.yml
+bench
+bower.json
+codecov.yml
+coverage
+docs
+klipse-github-docs.config.js
+rollup.config.js
+scripts
+test
