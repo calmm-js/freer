@@ -121,8 +121,8 @@ var run = function run(term) {
   return isPure(term) ? term[VALUE] : throwExpectedPure(term);
 };
 
-var handler = /*#__PURE__*/curry(function (onPure, onEffect) {
-  return function loop(term, state) {
+var handler = /*#__PURE__*/curry(function handler(onPure, onEffect) {
+  return function handler(term, state) {
     if (isPure(term)) {
       return onPure(term[VALUE], state);
     } else {
@@ -136,7 +136,7 @@ var handler = /*#__PURE__*/curry(function (onPure, onEffect) {
         effect = term;
       }
       var continuation = function continuation(value, state) {
-        return loop(applyTo(computation, value), state);
+        return handler(applyTo(computation, value), state);
       };
       return onEffect(effect, continuation, state);
     }
@@ -144,15 +144,17 @@ var handler = /*#__PURE__*/curry(function (onPure, onEffect) {
 });
 
 var runAsync = /*#__PURE__*/handler(resolve, function (e, k) {
-  return isThenable(e) ? e.then(k) : chain(k, e);
+  return isThenable(e) ? e.then(k) : chainU(k, e);
 });
 
+var VALUE$1 = 'v';
+
 var IVar = function IVar() {
-  var fill = void 0;
+  var value = void 0;
   var p = new Promise(function (resolve$$1) {
-    return fill = resolve$$1;
+    return value = resolve$$1;
   });
-  p.fill = fill;
+  p[VALUE$1] = value;
   return p;
 };
 
@@ -168,30 +170,30 @@ var unravel = function unravel(fn) {
 
   var wait = function wait(e) {
     resultV = IVar();
-    effectV.fill(e);
+    effectV[VALUE$1](e);
     return resultV;
   };
 
   fn(wait).then(function (r) {
     resultV = null;
-    effectV.fill(r);
+    effectV[VALUE$1](r);
   });
 
   var onEffect = function onEffect(v_or_e) {
     if (resultV) {
       effectV = IVar();
-      return chain(onResult, v_or_e);
+      return chainU(onResult, v_or_e);
     } else {
       return of(v_or_e);
     }
   };
 
   var onResult = function onResult(v) {
-    resultV.fill(v);
-    return chain(onEffect, effectV);
+    resultV[VALUE$1](v);
+    return chainU(onEffect, effectV);
   };
 
-  return chain(onEffect, effectV);
+  return chainU(onEffect, effectV);
 };
 
 var from = function from(fn) {
@@ -199,44 +201,46 @@ var from = function from(fn) {
 };
 
 var toAsync = /*#__PURE__*/handler(resolve, function (e, k) {
-  return e instanceof From ? chain(k, unravel(e[FN])) : chain(k, e);
+  return e instanceof From ? chainU(k, unravel(e[FN])) : chainU(k, e);
 });
 
 var Reader = function Reader() {
   var ask = new function Ask() {}();
-  var run$$1 = curryN(2, function (v) {
+  var run$$1 = curryN(2, function runReader(v) {
     return handler(of, function (e, k) {
-      return e === ask ? k(v) : chain(k, e);
+      return e === ask ? k(v) : chainU(k, e);
     });
   });
-  var local = curry(function (vv, m) {
-    return chain(function (v) {
+  var local = curry(function local(vv, m) {
+    return chainU(function (v) {
       return run$$1(vv(v), m);
     }, ask);
   });
   return { ask: ask, local: local, run: run$$1 };
 };
 
+var VALUE$2 = 'v';
+
 var State = function State() {
   var get = new function Get() {}();
   function Put(value) {
-    this.value = value;
+    this[VALUE$2] = value;
   }
   var put = function put(value) {
     return new Put(value);
   };
   var runner = handler(of, function (e, k, s) {
-    return e === get ? k(s, s) : e instanceof Put ? k(undefined, e.value) : chain(function (v) {
+    return e === get ? k(s, s) : e instanceof Put ? k(undefined, e[VALUE$2]) : chainU(function (v) {
       return k(v, s);
     }, e);
   });
-  var run$$1 = curry(function (s, m) {
+  var run$$1 = curry(function runState(s, m) {
     return runner(m, s);
   });
   var modify = function modify(ss) {
-    return chain(function (s0) {
+    return chainU(function (s0) {
       var s = ss(s0);
-      return chain(function () {
+      return chainU(function () {
         return of(s);
       }, put(s));
     }, get);
