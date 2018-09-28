@@ -84,6 +84,28 @@ const later = R.curry((ms, v) => new Promise(r => setTimeout(() => r(v), ms)))
 
 //
 
+const Exn = () => {
+  function Exn(value) {
+    this.value = value
+  }
+  const raise = value => new Exn(value)
+  const run = F.handler(
+    F.of,
+    (e, k) => (e instanceof Exn ? F.of(e) : F.chain(k, e))
+  )
+  const handle = R.curry((onE, m) =>
+    F.handler(
+      F.of,
+      (e, k) => (e instanceof Exn ? onE(e.value) : F.chain(k, e))
+    )(m)
+  )
+  return {raise, handle, run}
+}
+
+const Exn1 = Exn()
+
+//
+
 describe('freer', () => {
   testThrows(() => F.run(F.chain(F.of, Reader1.ask)))
 
@@ -195,6 +217,30 @@ describe('freer', () => {
       F.toAsync,
       State1.run(0),
       F.runAsync
+    )
+  )
+
+  testEq(Exn1.raise('Error'), () =>
+    I.seq(
+      F.map(R.negate, F.ap(F.map(R.add, Reader1.ask), Exn1.raise('Error'))),
+      Reader1.run(2),
+      Exn1.run,
+      F.run
+    )
+  )
+
+  testEq('error?', () =>
+    I.seq(
+      F.map(
+        R.concat(R.__, '?'),
+        Exn1.handle(
+          e => F.of(R.toLower(e)),
+          F.ap(F.map(R.add, Reader1.ask), Exn1.raise('Error'))
+        )
+      ),
+      Reader1.run(2),
+      Exn1.run,
+      F.run
     )
   )
 })
