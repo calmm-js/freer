@@ -91,10 +91,7 @@ describe('freer', () => {
 
   testEq([3, 2], () =>
     I.seq(
-      F.ap(
-        F.ap(F.of(R.pair), Reader1.local(x => x + 1, Reader1.ask)),
-        Reader1.ask
-      ),
+      F.ap(F.map(R.pair, Reader1.local(x => x + 1, Reader1.ask)), Reader1.ask),
       Reader1.run(2),
       F.run
     )
@@ -102,7 +99,7 @@ describe('freer', () => {
 
   testEq(['a', 'b'], () =>
     I.seq(
-      F.ap(F.ap(F.of(R.pair), Reader1.ask), Reader2.ask),
+      F.ap(F.map(R.pair, Reader1.ask), Reader2.ask),
       Reader1.run('a'),
       Reader2.run('b'),
       F.run
@@ -111,7 +108,7 @@ describe('freer', () => {
 
   testEq(['a', 'b'], () =>
     I.seq(
-      F.ap(F.ap(F.of(R.pair), Reader1.ask), Reader2.ask),
+      F.ap(F.map(R.pair, Reader1.ask), Reader2.ask),
       Reader2.run('b'),
       Reader1.run('a'),
       F.run
@@ -121,9 +118,9 @@ describe('freer', () => {
   testEq([55, 5], () =>
     I.seq(
       I.seq(
-        F.ap(F.ap(F.of(R.pair), State1.get), Reader1.ask),
+        F.ap(F.map(R.pair, State1.get), Reader1.ask),
         F.chain(sr => State1.put(R.sum(sr))),
-        F.chain(() => F.ap(F.ap(F.of(R.pair), State1.get), Reader1.ask))
+        F.chain(() => F.ap(F.map(R.pair, State1.get), Reader1.ask))
       ),
       Reader1.run(5),
       State1.run(50),
