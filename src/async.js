@@ -4,5 +4,5 @@ import * as F from './core'
 
 export const runAsync = F.handler(
   I.resolve,
-  (e, k) => (I.isThenable(e) ? e.then(k) : F.chain(k, e))
+  (e, k) => (I.isThenable(e) ? e.then(k) : F.chainU(k, e))
 )

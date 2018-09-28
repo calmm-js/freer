@@ -2,10 +2,12 @@ import * as I from './ext/infestines'
 
 import * as F from './core'
 
+const VALUE = 'v'
+
 const IVar = () => {
-  let fill
-  const p = new Promise(resolve => (fill = resolve))
-  p.fill = fill
+  let value
+  const p = new Promise(resolve => (value = resolve))
+  p[VALUE] = value
   return p
 }
 
@@ -21,35 +23,35 @@ const unravel = fn => {
 
   const wait = e => {
     resultV = IVar()
-    effectV.fill(e)
+    effectV[VALUE](e)
     return resultV
   }
 
   fn(wait).then(r => {
     resultV = null
-    effectV.fill(r)
+    effectV[VALUE](r)
   })
 
   const onEffect = v_or_e => {
     if (resultV) {
       effectV = IVar()
-      return F.chain(onResult, v_or_e)
+      return F.chainU(onResult, v_or_e)
     } else {
       return F.of(v_or_e)
     }
   }
 
   const onResult = v => {
-    resultV.fill(v)
-    return F.chain(onEffect, effectV)
+    resultV[VALUE](v)
+    return F.chainU(onEffect, effectV)
   }
 
-  return F.chain(onEffect, effectV)
+  return F.chainU(onEffect, effectV)
 }
 
 export const from = fn => new From(fn)
 
 export const toAsync = F.handler(
   I.resolve,
-  (e, k) => (e instanceof From ? F.chain(k, unravel(e[FN])) : F.chain(k, e))
+  (e, k) => (e instanceof From ? F.chainU(k, unravel(e[FN])) : F.chainU(k, e))
 )

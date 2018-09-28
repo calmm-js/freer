@@ -81,15 +81,15 @@ const applyTo = (computation, value) => {
 
 // Monad combinators
 
-const chainU = function chain(xy, x) {
+export const chainU = function chain(xy, x) {
   return isPure(x) ? xy(x[VALUE]) : append(x, xy)
 }
 
-const mapU = function map(xy, x) {
+export const mapU = function map(xy, x) {
   return isPure(x) ? of(xy(x[VALUE])) : append(x, x => of(xy(x)))
 }
 
-const apU = function ap(xy, x) {
+export const apU = function ap(xy, x) {
   return isPure(xy) ? mapU(xy[VALUE], x) : append(xy, xy => mapU(xy, x))
 }
 
