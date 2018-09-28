@@ -80,7 +80,7 @@ const State1 = F.State()
 
 //
 
-const later = I.curry((ms, v) => new Promise(r => setTimeout(() => r(v), ms)))
+const later = R.curry((ms, v) => new Promise(r => setTimeout(() => r(v), ms)))
 
 //
 
