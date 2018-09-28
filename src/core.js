@@ -1,5 +1,14 @@
 import * as I from './ext/infestines'
 
+//
+
+const show = x =>
+  I.isInstanceOf(Object, x) && I.constructorOf(x)
+    ? `${I.constructorOf(x).name}(${I.values(x)
+        .map(show)
+        .join(', ')})`
+    : JSON.stringify(x)
+
 // Computation queue
 
 const PREFIX = 'p'
@@ -35,9 +44,9 @@ const Impure = (process.env.NODE_ENV === 'production'
   : Impure =>
       I.inherit(Impure, Object, {
         toString() {
-          return `Impure(${this[EFFECT]}, [${names(this[COMPUTATION]).join(
-            ', '
-          )}])`
+          return `Impure(${show(this[EFFECT])}, [${names(
+            this[COMPUTATION]
+          ).join(', ')}])`
         }
       }))(function Impure(effect, computation) {
   this[EFFECT] = effect
