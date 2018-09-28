@@ -16,6 +16,7 @@ const FN = 'f'
 function From(fn) {
   this[FN] = fn
 }
+const isFrom = I.isInstanceOf(From)
 
 const unravel = fn => {
   let effectV = IVar()
@@ -49,9 +50,9 @@ const unravel = fn => {
   return F.chainU(onEffect, effectV)
 }
 
-export const from = fn => new From(fn)
+export const from = I.construct1(From)
 
 export const toAsync = F.handler(
   I.resolve,
-  (e, k) => (e instanceof From ? F.chainU(k, unravel(e[FN])) : F.chainU(k, e))
+  (e, k) => (isFrom(e) ? F.chainU(k, unravel(e[FN])) : F.chainU(k, e))
 )

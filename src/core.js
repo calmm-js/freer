@@ -23,7 +23,7 @@ function Pure(value) {
   this[VALUE] = value
 }
 
-const isPure = x => x instanceof Pure
+const isPure = I.isInstanceOf(Pure)
 
 //
 
@@ -46,7 +46,7 @@ const Impure = (process.env.NODE_ENV === 'production'
 
 const impure = (effect, computation) => new Impure(effect, computation)
 
-const isImpure = term => term instanceof Impure
+const isImpure = I.isInstanceOf(Impure)
 
 const append = (term, tail) =>
   isImpure(term)
@@ -95,7 +95,7 @@ export const apU = function ap(xy, x) {
 
 // Public interface
 
-export const of = value => new Pure(value)
+export const of = I.construct1(Pure)
 export const chain = I.curry(chainU)
 export const map = I.curry(mapU)
 export const ap = I.curry(apU)

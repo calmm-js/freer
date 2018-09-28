@@ -9,13 +9,14 @@ export const State = () => {
   function Put(value) {
     this[VALUE] = value
   }
-  const put = value => new Put(value)
+  const isPut = I.isInstanceOf(Put)
+  const put = I.construct1(Put)
   const runner = F.handler(
     F.of,
     (e, k, s) =>
       e === get
         ? k(s, s)
-        : e instanceof Put
+        : isPut(e)
           ? k(undefined, e[VALUE])
           : F.chainU(v => k(v, s), e)
   )
