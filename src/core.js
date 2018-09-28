@@ -105,24 +105,23 @@ export const Free = {map: mapU, of, ap: apU, chain: chainU}
 export const run = term =>
   isPure(term) ? term[VALUE] : throwExpectedPure(term)
 
-export const handler = I.curry(
-  (onPure, onEffect) =>
-    function loop(term, state) {
-      if (isPure(term)) {
-        return onPure(term[VALUE], state)
+export const handler = I.curry(function handler(onPure, onEffect) {
+  return function handler(term, state) {
+    if (isPure(term)) {
+      return onPure(term[VALUE], state)
+    } else {
+      let computation
+      let effect
+      if (isImpure(term)) {
+        computation = term[COMPUTATION]
+        effect = term[EFFECT]
       } else {
-        let computation
-        let effect
-        if (isImpure(term)) {
-          computation = term[COMPUTATION]
-          effect = term[EFFECT]
-        } else {
-          computation = of
-          effect = term
-        }
-        const continuation = (value, state) =>
-          loop(applyTo(computation, value), state)
-        return onEffect(effect, continuation, state)
+        computation = of
+        effect = term
       }
+      const continuation = (value, state) =>
+        handler(applyTo(computation, value), state)
+      return onEffect(effect, continuation, state)
     }
-)
+  }
+})

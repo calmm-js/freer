@@ -19,7 +19,9 @@ export const State = () => {
           ? k(undefined, e[VALUE])
           : F.chainU(v => k(v, s), e)
   )
-  const run = I.curry((s, m) => runner(m, s))
+  const run = I.curry(function runState(s, m) {
+    return runner(m, s)
+  })
   const modify = ss =>
     F.chainU(s0 => {
       const s = ss(s0)
