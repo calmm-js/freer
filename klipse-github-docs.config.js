@@ -9,7 +9,7 @@
       'https://unpkg.com/infestines/dist/infestines.js',
       'freer.js',
       'https://unpkg.com/partial.lenses/dist/partial.lenses.js',
-      'https://unpkg.com/ramda/dist/ramda.min.js',
+      'https://unpkg.com/ramda/dist/ramda.js',
       'setup.js'
     ]
   }
