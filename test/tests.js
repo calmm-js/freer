@@ -84,7 +84,7 @@ const later = R.curry((ms, v) => new Promise(r => setTimeout(() => r(v), ms)))
 
 //
 
-const Exn = () => {
+const Exn = ({concat = R.nthArg(1)} = {}) => {
   function Exn(value) {
     this.value = value
   }
@@ -99,7 +99,12 @@ const Exn = () => {
       (e, k) => (e instanceof Exn ? onE(e.value) : F.chain(k, e))
     )(m)
   )
-  return {raise, handle, run}
+  const alts = (m, ...ms) =>
+    ms.reduce(
+      (l, r) => handle(el => handle(er => raise(concat(el, er)), r), l),
+      m
+    )
+  return {raise, handle, alts, run}
 }
 
 const Exn1 = Exn()
@@ -239,6 +244,22 @@ describe('freer', () => {
         )
       ),
       Reader1.run(2),
+      Exn1.run,
+      F.run
+    )
+  )
+
+  testEq(Exn1.raise('E3'), () =>
+    I.seq(
+      Exn1.alts(Exn1.raise('E1'), Exn1.raise('E2'), Exn1.raise('E3')),
+      Exn1.run,
+      F.run
+    )
+  )
+
+  testEq(101, () =>
+    I.seq(
+      Exn1.alts(Exn1.raise('E1'), F.of(101), Exn1.raise('E2')),
       Exn1.run,
       F.run
     )
