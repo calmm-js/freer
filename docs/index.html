@@ -95,7 +95,7 @@ operations:</p>
 })</code></pre>
 <p>The above uses a <a href="#do-notation"><code>do</code> notation</a> approximation provided by this
 library.  One could also define the above operation using just the basic
-<a href="#free-combinators">monadic combitors</a>.</p>
+<a href="#free-combinators">monadic combinators</a>.</p>
 <p>Then we compose a runner that handles the operations we used:</p>
 <pre><code class="hljs lang-js">var aRunner = R.compose(F.runAsync, aState.run(1), aReader.run(2), F.toAsync)</code></pre>
 <p>Finally we run the operation and log the result:</p>
@@ -117,14 +117,14 @@ structure:</p>
 </code></pre>
 <h2><a id="reference"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#reference">■</a> <a href="#reference">Reference</a></h2>
 <p>The <a href="https://wiki.haskell.org/Combinator">combinators</a> provided by this library
-are provided as named exports.  Typically one just imports the library as:</p>
-<pre><code class="hljs lang-jsx">import * as F from &#39;freer</code></pre>
+are provided as named exports.  Typically one just imports this library as:</p>
+<pre><code class="hljs lang-jsx">import * as F from &#39;freer&#39;</code></pre>
 <p>The examples also make use of the <a href="https://github.com/calmm-js/partial.lenses/">Partial
 Lenses</a> and
 <a href="https://github.com/calmm-js/partial.lenses/">Ramda</a> libraries imported as:</p>
 <pre><code class="hljs lang-jsx">import * as L from &#39;partial.lenses&#39;
 import * as R from &#39;ramda&#39;</code></pre>
-<p>Neither of those libraries is required in order to use the library.</p>
+<p>Neither of those libraries is required in order to use this library.</p>
 <h3><a id="free-monad"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#free-monad">■</a> <a href="#free-monad">Free monad</a></h3>
 <h4><a id="F-Free"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-Free">■</a> <a href="#F-Free"><code>F.Free ~&gt; monad</code></a></h4>
 <p><code>F.Free</code> is the <a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md">Static
@@ -175,7 +175,7 @@ handles promises.</p>
 <h3><a id="do-notation"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#do-notation">■</a> <a href="#do-notation">Do notation</a></h3>
 <h4><a id="F-from"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-from">■</a> <a href="#F-from"><code>F.from(async $ =&gt; { ... await $(free) ... }) ~&gt; free</code></a></h4>
 <p><code>F.from</code> is used to wrap an <code>async $ =&gt; { ... }</code> function that <code>await $( ... )</code>s
-for effects, reminescent to a <a href="https://en.wikibooks.org/wiki/Haskell/do_notation"><code>do</code>
+for effects, reminescent of a <a href="https://en.wikibooks.org/wiki/Haskell/do_notation"><code>do</code>
 notation</a>, as a free
 operation to be handled by <a href="#F-toAsync"><code>F.toAsync</code></a>.</p>
 <h4><a id="F-toAsync"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-toAsync">■</a> <a href="#F-toAsync"><code>F.toAsync(free) ~&gt; free</code></a></h4>

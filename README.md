@@ -60,7 +60,7 @@ const addReaderToState = F.from(async $ => {
 
 The above uses a [`do` notation](#do-notation) approximation provided by this
 library.  One could also define the above operation using just the basic
-[monadic combitors](#free-combinators).
+[monadic combinators](#free-combinators).
 
 Then we compose a runner that handles the operations we used:
 
@@ -97,10 +97,10 @@ R.compose(F.run, aState.run(0))(
 ## <a id="reference"></a> [≡](#contents) [▶](https://calmm-js.github.io/freer/index.html#reference) [Reference](#reference)
 
 The [combinators](https://wiki.haskell.org/Combinator) provided by this library
-are provided as named exports.  Typically one just imports the library as:
+are provided as named exports.  Typically one just imports this library as:
 
 ```jsx
-import * as F from 'freer
+import * as F from 'freer'
 ```
 
 The examples also make use of the [Partial
@@ -112,7 +112,7 @@ import * as L from 'partial.lenses'
 import * as R from 'ramda'
 ```
 
-Neither of those libraries is required in order to use the library.
+Neither of those libraries is required in order to use this library.
 
 ### <a id="free-monad"></a> [≡](#contents) [▶](https://calmm-js.github.io/freer/index.html#free-monad) [Free monad](#free-monad)
 
@@ -183,7 +183,7 @@ handles promises.
 #### <a id="F-from"></a> [≡](#contents) [▶](https://calmm-js.github.io/freer/index.html#F-from) [`F.from(async $ => { ... await $(free) ... }) ~> free`](#F-from)
 
 `F.from` is used to wrap an `async $ => { ... }` function that `await $( ... )`s
-for effects, reminescent to a [`do`
+for effects, reminescent of a [`do`
 notation](https://en.wikibooks.org/wiki/Haskell/do_notation), as a free
 operation to be handled by [`F.toAsync`](#F-toAsync).
 
