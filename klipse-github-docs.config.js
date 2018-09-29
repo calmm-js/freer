@@ -20,7 +20,7 @@
       target: 'index.html',
       title: 'Freer',
       stripComments: true,
-      constToVar: true,
+      constToVar: false,
       menu: true,
       tooltips: true
     })

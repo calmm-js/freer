@@ -45,15 +45,15 @@ monad with composable effect handlers.
 First we create some handlers and free operations:
 
 ```js
-const aReader = F.Reader()
-const aState = F.State()
+var aReader = F.Reader()
+var aState = F.State()
 ```
 
 Then we define an ad-hoc operation that uses the previously defined free
 operations:
 
 ```js
-const addReaderToState = F.from(async $ => {
+var addReaderToState = F.from(async $ => {
   const v = await $(aReader.ask)
   return $(aState.modify(R.add(v)))
 })
@@ -66,7 +66,7 @@ library.  One could also define the above operation using just the basic
 Then we compose a runner that handles the operations we used:
 
 ```js
-const aRunner = R.compose(F.runAsync, aState.run(1), aReader.run(2), F.toAsync)
+var aRunner = R.compose(F.runAsync, aState.run(1), aReader.run(2), F.toAsync)
 ```
 
 Finally we run the operation and log the result:
@@ -218,13 +218,91 @@ used for combining exception values in `alt` and `alts`.  In case the argument
 is just a semigroup, `alts` requires at least one operation and there will be no
 `zero`.  The default argument is a semigroup that uses the last exception value.
 
+Given `const Ex = F.Exception()`,
+
+* `Ex.raise(any) ~> free` raises the given value to the closest enclosing
+  `Ex.handle`r or to the top of the handler stack,
+* `Ex.handle(any => free, free) ~> free` handles values raised from the given
+  operation,
+* `Ex.zero ~> free` is equivalent to `Ex.raise(empty())` when the argument to
+  `F.Exception` is a monoid,
+* `Ex.alts(...free) ~> free` tries the given operations in turn and returns the
+  result of the first operation that completes without raising or raises the
+  values accumulated from all the operations that raised,
+* `Ex.alt(free, free) ~> free` is a curried binary version of `Ex.alts`, and
+* `Ex.run` is the handler for the operations.
+
+For example:
+
+```js
+const Ex = F.Exception()
+
+R.compose(F.run, Ex.run)(
+  Ex.alt(
+    Ex.raise(`You'll never see me!`),
+    Ex.handle(
+      e => Ex.raise(`Nor me!`),
+      F.of(`This is what you'll get!`)
+    )
+  )
+)
+// 'This is what you'll get!'
+```
+
 #### <a id="F-Reader"></a> [≡](#contents) [▶](https://calmm-js.github.io/freer/index.html#F-Reader) [`F.Reader() ~> {ask, local, run}`](#F-Reader)
 
 `F.Reader` is a factory for Reader effects.
 
+Given `const Rd = F.Reader()`,
+
+* `Rd.ask ~> free` is an operation whose result is the value from the reader,
+* `Rd.local(value => value, free) ~> free` returns an operation that runs the
+  given operation with the value of the reader modified with the given function,
+  and
+* `Rd.run(value, free)` is the handler for the operations.
+
+For example:
+
+```js
+const Rd = F.Reader()
+
+R.compose(F.run, Rd.run(1))(
+  F.ap(Rd.local(R.inc, F.map(R.add, Rd.ask)), Rd.ask)
+)
+// 3
+```
+
 #### <a id="F-State"></a> [≡](#contents) [▶](https://calmm-js.github.io/freer/index.html#F-State) [`F.State() ~> {get, put, modify, run}`](#F-State)
 
 `F.State` is a factory for State effects.
+
+Given `const St = F.State()`,
+
+* `St.get ~> free` is an operation whose result is the current state,
+* `St.put(value) ~> free` is an operation that replaces the state with the given
+  value,
+* `St.modify(value => value) ~> free` is operation that updates the state with
+  the given function and whose result is the new state, and
+* `St.run` is the handler for the operations.
+
+For example:
+
+```js
+const St = F.State()
+
+R.compose(F.run, St.run(undefined))(
+  L.traverse(
+    F.Free,
+    it => F.chain(
+      prev => (it === prev ? F.of(undefined) : St.modify(R.always(it))),
+      St.get
+    ),
+    L.elems,
+    [1, 2, 2, 1, 1, 3]
+  )
+)
+// [1, 2, 1, 3]
+```
 
 ## <a id="related-work"></a> [≡](#contents) [▶](https://calmm-js.github.io/freer/index.html#reference) [Related work](#related-work)
 

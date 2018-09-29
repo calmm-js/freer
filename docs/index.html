@@ -201,10 +201,76 @@ or
 used for combining exception values in <code>alt</code> and <code>alts</code>.  In case the argument
 is just a semigroup, <code>alts</code> requires at least one operation and there will be no
 <code>zero</code>.  The default argument is a semigroup that uses the last exception value.</p>
+<p>Given <code>const Ex = F.Exception()</code>,</p>
+<ul>
+<li><code>Ex.raise(any) ~&gt; free</code> raises the given value to the closest enclosing
+<code>Ex.handle</code>r or to the top of the handler stack,</li>
+<li><code>Ex.handle(any =&gt; free, free) ~&gt; free</code> handles values raised from the given
+operation,</li>
+<li><code>Ex.zero ~&gt; free</code> is equivalent to <code>Ex.raise(empty())</code> when the argument to
+<code>F.Exception</code> is a monoid,</li>
+<li><code>Ex.alts(...free) ~&gt; free</code> tries the given operations in turn and returns the
+result of the first operation that completes without raising or raises the
+values accumulated from all the operations that raised,</li>
+<li><code>Ex.alt(free, free) ~&gt; free</code> is a curried binary version of <code>Ex.alts</code>, and</li>
+<li><code>Ex.run</code> is the handler for the operations.</li>
+</ul>
+<p>For example:</p>
+<pre><code class="hljs lang-js">const Ex = F.Exception()
+
+R.compose(F.run, Ex.run)(
+  Ex.alt(
+    Ex.raise(`You&#39;ll never see me!`),
+    Ex.handle(
+      e =&gt; Ex.raise(`Nor me!`),
+      F.of(`This is what you&#39;ll get!`)
+    )
+  )
+)
+</code></pre>
 <h4><a id="F-Reader"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-Reader">■</a> <a href="#F-Reader"><code>F.Reader() ~&gt; {ask, local, run}</code></a></h4>
 <p><code>F.Reader</code> is a factory for Reader effects.</p>
+<p>Given <code>const Rd = F.Reader()</code>,</p>
+<ul>
+<li><code>Rd.ask ~&gt; free</code> is an operation whose result is the value from the reader,</li>
+<li><code>Rd.local(value =&gt; value, free) ~&gt; free</code> returns an operation that runs the
+given operation with the value of the reader modified with the given function,
+and</li>
+<li><code>Rd.run(value, free)</code> is the handler for the operations.</li>
+</ul>
+<p>For example:</p>
+<pre><code class="hljs lang-js">const Rd = F.Reader()
+
+R.compose(F.run, Rd.run(1))(
+  F.ap(Rd.local(R.inc, F.map(R.add, Rd.ask)), Rd.ask)
+)
+</code></pre>
 <h4><a id="F-State"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-State">■</a> <a href="#F-State"><code>F.State() ~&gt; {get, put, modify, run}</code></a></h4>
 <p><code>F.State</code> is a factory for State effects.</p>
+<p>Given <code>const St = F.State()</code>,</p>
+<ul>
+<li><code>St.get ~&gt; free</code> is an operation whose result is the current state,</li>
+<li><code>St.put(value) ~&gt; free</code> is an operation that replaces the state with the given
+value,</li>
+<li><code>St.modify(value =&gt; value) ~&gt; free</code> is operation that updates the state with
+the given function and whose result is the new state, and</li>
+<li><code>St.run</code> is the handler for the operations.</li>
+</ul>
+<p>For example:</p>
+<pre><code class="hljs lang-js">const St = F.State()
+
+R.compose(F.run, St.run(undefined))(
+  L.traverse(
+    F.Free,
+    it =&gt; F.chain(
+      prev =&gt; (it === prev ? F.of(undefined) : St.modify(R.always(it))),
+      St.get
+    ),
+    L.elems,
+    [1, 2, 2, 1, 1, 3]
+  )
+)
+</code></pre>
 <h2><a id="related-work"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#reference">■</a> <a href="#related-work">Related work</a></h2>
 <p>The core of this library is based on ideas from <a href="http://okmij.org/ftp/Haskell/extensible/">Extensible Effects: an
 alternative to Monad Transformers</a>.</p>
