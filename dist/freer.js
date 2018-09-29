@@ -8,8 +8,24 @@
     return null != x && I.isFunction(x.then);
   };
 
+  var isInstanceOf = /*#__PURE__*/I.curry(function isInstanceOf(Type, x) {
+    return x instanceof Type;
+  });
+
   var resolve = function resolve(x) {
     return Promise.resolve(x);
+  };
+
+  var construct1 = function construct1(Type) {
+    return function (x) {
+      return new Type(x);
+    };
+  };
+
+  //
+
+  var show = function show(x) {
+    return isInstanceOf(Object, x) && I.constructorOf(x) ? I.constructorOf(x).name + '(' + I.values(x).map(show).join(', ') + ')' : JSON.stringify(x);
   };
 
   // Computation queue
@@ -34,9 +50,7 @@
     this[VALUE] = value;
   }
 
-  var isPure = function isPure(x) {
-    return x instanceof Pure;
-  };
+  var isPure = /*#__PURE__*/isInstanceOf(Pure);
 
   //
 
@@ -46,7 +60,7 @@
   var Impure = /*#__PURE__*/(function (Impure) {
     return I.inherit(Impure, Object, {
       toString: function toString() {
-        return 'Impure(' + this[EFFECT] + ', [' + names(this[COMPUTATION]).join(', ') + '])';
+        return 'Impure(' + show(this[EFFECT]) + ', [' + names(this[COMPUTATION]).join(', ') + '])';
       }
     });
   })(function Impure(effect, computation) {
@@ -58,9 +72,7 @@
     return new Impure(effect, computation);
   };
 
-  var isImpure = function isImpure(term) {
-    return term instanceof Impure;
-  };
+  var isImpure = /*#__PURE__*/isInstanceOf(Impure);
 
   var append = function append(term, tail) {
     return isImpure(term) ? impure(term[EFFECT], new Concat(term[COMPUTATION], tail)) : impure(term, tail);
@@ -112,9 +124,7 @@
 
   // Public interface
 
-  var of = function of(value) {
-    return new Pure(value);
-  };
+  var of = /*#__PURE__*/construct1(Pure);
   var chain = /*#__PURE__*/I.curry(chainU);
   var map = /*#__PURE__*/I.curry(mapU);
   var ap = /*#__PURE__*/I.curry(apU);
@@ -167,6 +177,7 @@
   function From(fn) {
     this[FN] = fn;
   }
+  var isFrom = /*#__PURE__*/isInstanceOf(From);
 
   var unravel = function unravel(fn) {
     var effectV = IVar();
@@ -200,13 +211,55 @@
     return chainU(onEffect, effectV);
   };
 
-  var from = function from(fn) {
-    return new From(fn);
-  };
+  var from = /*#__PURE__*/construct1(From);
 
   var toAsync = /*#__PURE__*/handler(resolve, function (e, k) {
-    return e instanceof From ? chainU(k, unravel(e[FN])) : chainU(k, e);
+    return isFrom(e) ? chainU(k, unravel(e[FN])) : chainU(k, e);
   });
+
+  var last = { concat: I.sndU };
+
+  function Exception() {
+    var _ref = arguments.length && arguments[0] || last,
+        empty = _ref.empty,
+        concat = _ref.concat;
+
+    function Raise(value) {
+      this.value = value;
+    }
+    var isRaise = isInstanceOf(Raise);
+    var raise = construct1(Raise);
+    var run$$1 = handler(of, function (e, k) {
+      return isRaise(e) ? of(e) : chainU(k, e);
+    });
+    var handle = I.curryN(2, function (onRaise) {
+      return handler(of, function (e, k) {
+        return isRaise(e) ? onRaise(e.value) : chainU(k, e);
+      });
+    });
+    var zero = empty ? raise(empty()) : undefined;
+    var altU = function alt(l, r) {
+      return handle(function (el) {
+        return handle(function (er) {
+          return raise(concat(el, er));
+        }, r);
+      }, l);
+    };
+    var alt = I.curry(altU);
+    var semi = function alts(_) {
+      var n = arguments.length;
+      var r = arguments[--n];
+      while (n) {
+        var l = arguments[--n];
+        r = altU(l, r);
+      }
+      return r;
+    };
+    var alts = zero ? function alts() {
+      return arguments.length === 0 ? zero : semi.apply(null, arguments);
+    } : semi;
+    return I.assocPartialU('zero', zero, { raise: raise, handle: handle, alt: alt, alts: alts, run: run$$1 });
+  }
 
   var Reader = function Reader() {
     var ask = new function Ask() {}();
@@ -230,11 +283,10 @@
     function Put(value) {
       this[VALUE$2] = value;
     }
-    var put = function put(value) {
-      return new Put(value);
-    };
+    var isPut = isInstanceOf(Put);
+    var put = construct1(Put);
     var runner = handler(of, function (e, k, s) {
-      return e === get ? k(s, s) : e instanceof Put ? k(undefined, e[VALUE$2]) : chainU(function (v) {
+      return e === get ? k(s, s) : isPut(e) ? k(undefined, e[VALUE$2]) : chainU(function continueState(v) {
         return k(v, s);
       }, e);
     });
@@ -264,6 +316,7 @@
   exports.from = from;
   exports.toAsync = toAsync;
   exports.handler = handler;
+  exports.Exception = Exception;
   exports.Reader = Reader;
   exports.State = State;
 

@@ -74,6 +74,7 @@ monad with composable effect handlers.</p>
 </ul>
 </li>
 <li><a href="#handlers-a-la-carte">Handlers à la carte</a><ul>
+<li><a href="#F-Exception"><code>F.Exception([{concat[, empty]}]) ~&gt; {raise, handle[, zero], alt, alts, run}</code></a></li>
 <li><a href="#F-Reader"><code>F.Reader() ~&gt; {ask, local, run}</code></a></li>
 <li><a href="#F-State"><code>F.State() ~&gt; {get, put, modify, run}</code></a></li>
 </ul>
@@ -191,6 +192,15 @@ handler for the final result.  The second argument is the handler for some
 effects.  It is given an effect, which the handler may or many not know how to
 handle, and the continuation and it must then return a free operation.</p>
 <h3><a id="handlers-a-la-carte"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#handlers-a-la-carte">■</a> <a href="#handlers-a-la-carte">Handlers à la carte</a></h3>
+<h4><a id="F-Exception"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-Exception">■</a> <a href="#F-Exception"><code>F.Exception([{concat[, empty]}]) ~&gt; {raise, handle[, zero], alt, alts, run}</code></a></h4>
+<p><code>F.Exception</code> is a factory for Exception handling effects.  The optional
+argument is a
+<a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md#semigroup">semigroup</a>
+or
+<a href="https://github.com/rpominov/static-land/blob/master/docs/spec.md#monoid">monoid</a>
+used for combining exception values in <code>alt</code> and <code>alts</code>.  In case the argument
+is just a semigroup, <code>alts</code> requires at least one operation and there will be no
+<code>zero</code>.  The default argument is a semigroup that uses the last exception value.</p>
 <h4><a id="F-Reader"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-Reader">■</a> <a href="#F-Reader"><code>F.Reader() ~&gt; {ask, local, run}</code></a></h4>
 <p><code>F.Reader</code> is a factory for Reader effects.</p>
 <h4><a id="F-State"></a> <a href="#contents">≡</a> <a href="https://github.com/calmm-js/freer/blob/master/README.md#F-State">■</a> <a href="#F-State"><code>F.State() ~&gt; {get, put, modify, run}</code></a></h4>

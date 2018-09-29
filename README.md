@@ -33,6 +33,7 @@ monad with composable effect handlers.
   * [Defining new handlers](#defining-new-handlers)
     * [`F.handler((value, any) => free, (effect, continuation, any) => free) ~> (free, any) ~> free`](#F-handler)
   * [Handlers à la carte](#handlers-a-la-carte)
+    * [`F.Exception([{concat[, empty]}]) ~> {raise, handle[, zero], alt, alts, run}`](#F-Exception)
     * [`F.Reader() ~> {ask, local, run}`](#F-Reader)
     * [`F.State() ~> {get, put, modify, run}`](#F-State)
 * [Related work](#related-work)
@@ -205,6 +206,17 @@ effects.  It is given an effect, which the handler may or many not know how to
 handle, and the continuation and it must then return a free operation.
 
 ### <a id="handlers-a-la-carte"></a> [≡](#contents) [▶](https://calmm-js.github.io/freer/index.html#handlers-a-la-carte) [Handlers à la carte](#handlers-a-la-carte)
+
+#### <a id="F-Exception"></a> [≡](#contents) [▶](https://calmm-js.github.io/freer/index.html#F-Exception) [`F.Exception([{concat[, empty]}]) ~> {raise, handle[, zero], alt, alts, run}`](#F-Exception)
+
+`F.Exception` is a factory for Exception handling effects.  The optional
+argument is a
+[semigroup](https://github.com/rpominov/static-land/blob/master/docs/spec.md#semigroup)
+or
+[monoid](https://github.com/rpominov/static-land/blob/master/docs/spec.md#monoid)
+used for combining exception values in `alt` and `alts`.  In case the argument
+is just a semigroup, `alts` requires at least one operation and there will be no
+`zero`.  The default argument is a semigroup that uses the last exception value.
 
 #### <a id="F-Reader"></a> [≡](#contents) [▶](https://calmm-js.github.io/freer/index.html#F-Reader) [`F.Reader() ~> {ask, local, run}`](#F-Reader)
 

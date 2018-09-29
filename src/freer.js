@@ -21,5 +21,6 @@ export {handler} from './core'
 
 // Handlers à la carte
 
+export {Exception} from './exception'
 export {Reader} from './reader'
 export {State} from './state'
