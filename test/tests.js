@@ -19,14 +19,12 @@ function show(x) {
 const toExpr = f =>
   f
     .toString()
+    .replace(/^\(\) => /, '')
     .replace(/\s+/g, ' ')
-    .replace(/^\s*function\s*\(\s*\)\s*{\s*(return\s*)?/, '')
-    .replace(/\s*;?\s*}\s*$/, '')
-    .replace(/function\s*(\([a-zA-Z]*\))\s*/g, '$1 => ')
-    .replace(/{\s*return\s*([^{;]+)\s*;\s*}/g, '$1')
+    .replace(/;\s*}/g, ' }')
 
 function testEq(expect, thunk) {
-  it(`${toExpr(thunk)} => ${show(expect)}`, async () => {
+  it(`${toExpr(thunk)} ~> ${show(expect)}`, async () => {
     const actual = await thunk()
     if (!R.equals(actual, expect))
       throw Error(`Expected: ${show(expect)}, actual: ${show(actual)}`)
@@ -34,7 +32,7 @@ function testEq(expect, thunk) {
 }
 
 const testThrows = thunk =>
-  it(`${toExpr(thunk)} => throws`, async () => {
+  it(`${toExpr(thunk)} ~> throws`, async () => {
     let raised
     let result
     try {
