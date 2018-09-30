@@ -109,7 +109,7 @@ export const chain = I.curry(chainU)
 export const map = I.curry(mapU)
 export const ap = I.curry(apU)
 
-export const Free = {map: mapU, of, ap: apU, chain: chainU}
+export const Free = I.Monad(mapU, of, apU, chainU)
 
 export const run = term =>
   isPure(term) ? term[VALUE] : throwExpectedPure(term)
