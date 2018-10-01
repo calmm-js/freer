@@ -5,10 +5,11 @@ import * as F from './core'
 const VALUE = 'v'
 
 export const State = () => {
-  const get = new function Get() {}()
-  function Put(value) {
+  const Get = I.inherit(function Get() {}, F.Effect)
+  const get = new Get()
+  const Put = I.inherit(function Put(value) {
     this[VALUE] = value
-  }
+  }, F.Effect)
   const isPut = I.isInstanceOf(Put)
   const put = I.construct1(Put)
   const runner = F.handler(

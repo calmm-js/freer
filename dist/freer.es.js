@@ -1,37 +1,42 @@
-import { constructorOf, values, isFunction, id, inherit, curry, curryN, sndU, assocPartialU } from 'infestines';
+import { resolve, isThenable, values, isFunction, constructorOf, inherit, curry, Monad, sndU, curryN, assocPartialU, id, always, arityN, defineNameU, isInstanceOfU } from 'infestines';
 
-var isThenable = function isThenable(x) {
-  return null != x && isFunction(x.then);
+var setNameU = process.env.NODE_ENV === 'production' ? function (fn) {
+  return fn;
+} : defineNameU;
+
+var copyNameU = process.env.NODE_ENV === 'production' ? function (fn) {
+  return fn;
+} : function (fn, from) {
+  return defineNameU(fn, from.name);
 };
 
-var isInstanceOf = /*#__PURE__*/curry(function isInstanceOf(Type, x) {
-  return x instanceof Type;
-});
-
-var resolve = function resolve(x) {
-  return Promise.resolve(x);
-};
+var isInstanceOf = /*#__PURE__*/curry(isInstanceOfU);
 
 var construct1 = function construct1(Type) {
-  return function (x) {
+  return copyNameU(function (x) {
     return new Type(x);
-  };
+  }, Type);
 };
 
-//
+// Debug
+
+var showFn = function showFn(x) {
+  return x.name || x.toString();
+};
+
+var showParams = function showParams(x) {
+  var vs = values(x);
+  return vs.length ? '(' + vs.map(show).join(', ') + ')' : '';
+};
 
 var show = function show(x) {
-  return isInstanceOf(Object, x) && constructorOf(x) ? constructorOf(x).name + '(' + values(x).map(show).join(', ') + ')' : JSON.stringify(x);
+  return isFunction(x) ? showFn(x) : isInstanceOf(Object, x) && constructorOf(x) ? '' + showFn(constructorOf(x)) + showParams(x) : JSON.stringify(x);
 };
 
 // Computation queue
 
 var PREFIX = 'p';
 var SUFFIX = 's';
-
-var names = function names(c) {
-  return isFunction(c) ? [c.name || '' + c] : names(c[PREFIX]).concat(names(c[SUFFIX]));
-};
 
 function Concat(prefix, suffix) {
   this[PREFIX] = prefix;
@@ -40,11 +45,21 @@ function Concat(prefix, suffix) {
 
 // Term representation
 
+var Term = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? function (fn) {
+  return fn;
+} : inherit)(function Term() {}, null, {
+  toString: function toString() {
+    return show(this);
+  }
+});
+
+//
+
 var VALUE = 'v';
 
-function Pure(value) {
+var Pure = /*#__PURE__*/inherit(function Pure(value) {
   this[VALUE] = value;
-}
+}, Term);
 
 var isPure = /*#__PURE__*/isInstanceOf(Pure);
 
@@ -53,16 +68,10 @@ var isPure = /*#__PURE__*/isInstanceOf(Pure);
 var EFFECT = 'e';
 var COMPUTATION = 'c';
 
-var Impure = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? id : function (Impure) {
-  return inherit(Impure, Object, {
-    toString: function toString() {
-      return 'Impure(' + show(this[EFFECT]) + ', [' + names(this[COMPUTATION]).join(', ') + '])';
-    }
-  });
-})(function Impure(effect, computation) {
+var Impure = /*#__PURE__*/inherit(function Impure(effect, computation) {
   this[EFFECT] = effect;
   this[COMPUTATION] = computation;
-});
+}, Term);
 
 var impure = function impure(effect, computation) {
   return new Impure(effect, computation);
@@ -125,30 +134,26 @@ var chain = /*#__PURE__*/curry(chainU);
 var map = /*#__PURE__*/curry(mapU);
 var ap = /*#__PURE__*/curry(apU);
 
-var Free = { map: mapU, of: of, ap: apU, chain: chainU };
+var Free = /*#__PURE__*/Monad(mapU, of, apU, chainU);
 
 var run = function run(term) {
   return isPure(term) ? term[VALUE] : throwExpectedPure(term);
 };
 
+var Effect = /*#__PURE__*/inherit(function Effect() {}, Term);
+
 var handler = /*#__PURE__*/curry(function handler(onPure, onEffect) {
   return function handler(term, state) {
     if (isPure(term)) {
       return onPure(term[VALUE], state);
-    } else {
-      var computation = void 0;
-      var effect = void 0;
-      if (isImpure(term)) {
-        computation = term[COMPUTATION];
-        effect = term[EFFECT];
-      } else {
-        computation = of;
-        effect = term;
-      }
+    } else if (isImpure(term)) {
+      var computation = term[COMPUTATION];
       var continuation = function continuation(value, state) {
         return handler(applyTo(computation, value), state);
       };
-      return onEffect(effect, continuation, state);
+      return onEffect(term[EFFECT], continuation, state);
+    } else {
+      return onEffect(term, onPure, state);
     }
   };
 });
@@ -220,9 +225,9 @@ function Exception() {
       empty = _ref.empty,
       concat = _ref.concat;
 
-  function Raise(value) {
+  var Raise = inherit(function Raise(value) {
     this.value = value;
-  }
+  }, Effect);
   var isRaise = isInstanceOf(Raise);
   var raise = construct1(Raise);
   var run$$1 = handler(of, function (e, k) {
@@ -258,7 +263,8 @@ function Exception() {
 }
 
 var Reader = function Reader() {
-  var ask = new function Ask() {}();
+  var Ask = inherit(function Ask() {}, Effect);
+  var ask = new Ask();
   var run$$1 = curryN(2, function runReader(v) {
     return handler(of, function (e, k) {
       return e === ask ? k(v) : chainU(k, e);
@@ -275,10 +281,11 @@ var Reader = function Reader() {
 var VALUE$2 = 'v';
 
 var State = function State() {
-  var get = new function Get() {}();
-  function Put(value) {
+  var Get = inherit(function Get() {}, Effect);
+  var get = new Get();
+  var Put = inherit(function Put(value) {
     this[VALUE$2] = value;
-  }
+  }, Effect);
   var isPut = isInstanceOf(Put);
   var put = construct1(Put);
   var runner = handler(of, function (e, k, s) {
@@ -300,6 +307,88 @@ var State = function State() {
   return { get: get, put: put, modify: modify, run: run$$1 };
 };
 
+var join = function join(m) {
+  return chainU(id, m);
+};
+
+var noop = /*#__PURE__*/of(undefined);
+
+var alwaysNoop = /*#__PURE__*/always(noop);
+var either = function either(onT, onF) {
+  return function (b) {
+    return b ? onT : onF;
+  };
+};
+
+var when = /*#__PURE__*/curryN(2, /*#__PURE__*/setNameU( /*#__PURE__*/either(id, alwaysNoop), 'when'));
+var unless = /*#__PURE__*/curryN(2, /*#__PURE__*/setNameU( /*#__PURE__*/either(alwaysNoop, id), 'unless'));
+
+var pipe2U = function pipe2(l, r) {
+  return function pipe2(x) {
+    return chainU(r, l(x));
+  };
+};
+
+function pipe() {
+  var n = arguments.length;
+  if (!n) return of;
+  var r = arguments[--n];
+  while (n) {
+    r = pipe2U(arguments[--n], r);
+  }return r;
+}
+
+function compose() {
+  var n = arguments.length;
+  if (!n) return of;
+  var r = arguments[--n];
+  while (n) {
+    r = pipe2U(r, arguments[--n]);
+  }return r;
+}
+
+function thru(m) {
+  var n = arguments.length;
+  for (var i = 1; i < n; ++i) {
+    m = chainU(arguments[i], m);
+  }return m;
+}
+
+var cons = function cons(l) {
+  return function (r) {
+    return [l, r];
+  };
+};
+var toArray = function toArray(cs) {
+  var r = [];
+  while (cs) {
+    r.push(cs[0]);
+    cs = cs[1];
+  }
+  return r.reverse();
+};
+
+var sequence = function sequence(xs) {
+  var n = xs.length;
+  var r = of(null);
+  for (var i = 0; i < n; ++i) {
+    r = apU(mapU(cons, xs[i]), r);
+  }return mapU(toArray, r);
+};
+
+var lift = function lift(fn) {
+  var fnc = copyNameU(function (cs) {
+    return fn.apply(null, toArray(cs));
+  }, fn);
+  return arityN(fn.length, copyNameU(function () {
+    var n = arguments.length;
+    var r = of(null);
+    for (var i = 0; i < n; ++i) {
+      r = apU(mapU(cons, arguments[i]), r);
+    }return mapU(fnc, r);
+  }, fn));
+};
+
 // The Free combinators
 
-export { of, chain, map, ap, Free, run, runAsync, from, toAsync, handler, Exception, Reader, State };
+export { of, chain, map, ap, Free, run, runAsync, from, toAsync, Effect, handler, Exception, Reader, State, noop, thru, compose, pipe, join, unless, when, sequence, lift };

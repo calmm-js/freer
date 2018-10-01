@@ -56,9 +56,9 @@ const Reader2 = F.Reader()
 //
 
 const Writer = () => {
-  function Tell(value) {
+  const Tell = I.inherit(function Tell(value) {
     this.value = value
-  }
+  }, F.Effect)
   const tell = value => new Tell(value)
   const run = F.handler(
     x => F.of([x, []]),
@@ -88,13 +88,37 @@ const Exn2 = F.Exception({empty: R.always([]), concat: R.concat})
 //
 
 describe('freer', () => {
+  const add = F.lift(R.add)
+  const pair = F.lift(R.pair)
+  const sum = F.lift(R.sum)
+  const negate = F.lift(R.negate)
+
   testThrows(() => F.run(F.chain(F.of, Reader1.ask)))
 
-  testEq(3, () => I.seq(F.of(1), F.chain(x => F.of(x + 2)), F.run))
+  testEq(3, () => F.run(F.thru(F.of(1), x => F.of(x + 2))))
+
+  testEq(101, () => F.run(F.join(F.of(F.of(101)))))
+
+  testEq(76, () => F.run(F.pipe()(76)))
+  testEq(76, () => F.run(F.compose()(76)))
+
+  testEq(76, () =>
+    I.seq(
+      F.compose(
+        () => State1.get,
+        State1.put
+      )(76),
+      State1.run(0),
+      F.run
+    )
+  )
+
+  testEq(42, () => F.run(F.when(true, F.of(42))))
+  testEq(42, () => F.run(F.unless(false, F.of(42))))
 
   testEq([3, 2], () =>
     I.seq(
-      F.ap(F.map(R.pair, Reader1.local(x => x + 1, Reader1.ask)), Reader1.ask),
+      pair(Reader1.local(x => x + 1, Reader1.ask), Reader1.ask),
       Reader1.run(2),
       F.run
     )
@@ -102,7 +126,7 @@ describe('freer', () => {
 
   testEq(['a', 'b'], () =>
     I.seq(
-      F.ap(F.map(R.pair, Reader1.ask), Reader2.ask),
+      pair(Reader1.ask, Reader2.ask),
       Reader1.run('a'),
       Reader2.run('b'),
       F.run
@@ -111,7 +135,7 @@ describe('freer', () => {
 
   testEq(['a', 'b'], () =>
     I.seq(
-      F.ap(F.map(R.pair, Reader1.ask), Reader2.ask),
+      F.sequence([Reader1.ask, Reader2.ask]),
       Reader2.run('b'),
       Reader1.run('a'),
       F.run
@@ -120,10 +144,8 @@ describe('freer', () => {
 
   testEq([55, 5], () =>
     I.seq(
-      I.seq(
-        F.ap(F.map(R.pair, State1.get), Reader1.ask),
-        F.chain(sr => State1.put(R.sum(sr))),
-        F.chain(() => F.ap(F.map(R.pair, State1.get), Reader1.ask))
+      F.thru(sum(pair(State1.get, Reader1.ask)), State1.put, () =>
+        pair(State1.get, Reader1.ask)
       ),
       Reader1.run(5),
       State1.run(50),
@@ -145,9 +167,11 @@ describe('freer', () => {
 
   testEq([10, ['begin', 'end']], () =>
     I.seq(
-      Writer1.tell('begin'),
-      F.chain(() => Reader1.ask),
-      F.chain(r => I.seq(Writer1.tell('end'), F.chain(() => F.of(r)))),
+      F.thru(
+        Writer1.tell('begin'),
+        () => Reader1.ask,
+        r => F.thru(Writer1.tell('end'), () => F.of(r))
+      ),
       Reader1.run(10),
       Writer1.run,
       F.run
@@ -158,7 +182,10 @@ describe('freer', () => {
     I.seq(
       L.traverse(
         F.Free,
-        x => I.seq(State1.modify(R.add(x)), F.chain(y => later(y, y))),
+        F.pipe(
+          R.o(State1.modify, R.add),
+          y => later(y, y)
+        ),
         L.flatten,
         [[[[1]], [[[2]], [4]]], [[[3]]]]
       ),
@@ -203,7 +230,7 @@ describe('freer', () => {
 
   testEq(Exn1.raise('Error'), () =>
     I.seq(
-      F.map(R.negate, F.ap(F.map(R.add, Reader1.ask), Exn1.raise('Error'))),
+      negate(add(Reader1.ask, Exn1.raise('Error'))),
       Reader1.run(2),
       Exn1.run,
       F.run
@@ -216,7 +243,7 @@ describe('freer', () => {
         R.concat(R.__, '?'),
         Exn1.handle(
           e => F.of(R.toLower(e)),
-          F.ap(F.map(R.add, Reader1.ask), Exn1.raise('Error'))
+          add(Reader1.ask, Exn1.raise('Error'))
         )
       ),
       Reader1.run(2),

@@ -6,9 +6,9 @@ const last = {concat: I.sndU}
 
 export function Exception() {
   const {empty, concat} = (arguments.length && arguments[0]) || last
-  function Raise(value) {
+  const Raise = I.inherit(function Raise(value) {
     this.value = value
-  }
+  }, F.Effect)
   const isRaise = I.isInstanceOf(Raise)
   const raise = I.construct1(Raise)
   const run = F.handler(F.of, (e, k) => (isRaise(e) ? F.of(e) : F.chainU(k, e)))

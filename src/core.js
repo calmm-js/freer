@@ -1,23 +1,25 @@
 import * as I from './ext/infestines'
 
-//
+// Debug
+
+const showFn = x => x.name || x.toString()
+
+const showParams = x => {
+  const vs = I.values(x)
+  return vs.length ? `(${vs.map(show).join(', ')})` : ''
+}
 
 const show = x =>
-  I.isInstanceOf(Object, x) && I.constructorOf(x)
-    ? `${I.constructorOf(x).name}(${I.values(x)
-        .map(show)
-        .join(', ')})`
-    : JSON.stringify(x)
+  I.isFunction(x)
+    ? showFn(x)
+    : I.isInstanceOf(Object, x) && I.constructorOf(x)
+      ? `${showFn(I.constructorOf(x))}${showParams(x)}`
+      : JSON.stringify(x)
 
 // Computation queue
 
 const PREFIX = 'p'
 const SUFFIX = 's'
-
-const names = c =>
-  I.isFunction(c)
-    ? [c.name || `${c}`]
-    : names(c[PREFIX]).concat(names(c[SUFFIX]))
 
 function Concat(prefix, suffix) {
   this[PREFIX] = prefix
@@ -26,11 +28,23 @@ function Concat(prefix, suffix) {
 
 // Term representation
 
+const Term = (process.env.NODE_ENV === 'production' ? fn => fn : I.inherit)(
+  function Term() {},
+  null,
+  {
+    toString() {
+      return show(this)
+    }
+  }
+)
+
+//
+
 const VALUE = 'v'
 
-function Pure(value) {
+const Pure = I.inherit(function Pure(value) {
   this[VALUE] = value
-}
+}, Term)
 
 const isPure = I.isInstanceOf(Pure)
 
@@ -39,19 +53,10 @@ const isPure = I.isInstanceOf(Pure)
 const EFFECT = 'e'
 const COMPUTATION = 'c'
 
-const Impure = (process.env.NODE_ENV === 'production'
-  ? I.id
-  : Impure =>
-      I.inherit(Impure, Object, {
-        toString() {
-          return `Impure(${show(this[EFFECT])}, [${names(
-            this[COMPUTATION]
-          ).join(', ')}])`
-        }
-      }))(function Impure(effect, computation) {
+const Impure = I.inherit(function Impure(effect, computation) {
   this[EFFECT] = effect
   this[COMPUTATION] = computation
-})
+}, Term)
 
 const impure = (effect, computation) => new Impure(effect, computation)
 
@@ -114,23 +119,19 @@ export const Free = I.Monad(mapU, of, apU, chainU)
 export const run = term =>
   isPure(term) ? term[VALUE] : throwExpectedPure(term)
 
+export const Effect = I.inherit(function Effect() {}, Term)
+
 export const handler = I.curry(function handler(onPure, onEffect) {
   return function handler(term, state) {
     if (isPure(term)) {
       return onPure(term[VALUE], state)
-    } else {
-      let computation
-      let effect
-      if (isImpure(term)) {
-        computation = term[COMPUTATION]
-        effect = term[EFFECT]
-      } else {
-        computation = of
-        effect = term
-      }
+    } else if (isImpure(term)) {
+      const computation = term[COMPUTATION]
       const continuation = (value, state) =>
         handler(applyTo(computation, value), state)
-      return onEffect(effect, continuation, state)
+      return onEffect(term[EFFECT], continuation, state)
+    } else {
+      return onEffect(term, onPure, state)
     }
   }
 })
