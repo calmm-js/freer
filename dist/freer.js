@@ -1,8 +1,8 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('infestines')) :
   typeof define === 'function' && define.amd ? define(['exports', 'infestines'], factory) :
-  (factory((global.freer = {}),global.I));
-}(this, (function (exports,I) { 'use strict';
+  (global = global || self, factory(global.freer = {}, global.I));
+}(this, function (exports, I) { 'use strict';
 
   var setNameU = I.defineNameU;
 
@@ -45,7 +45,7 @@
 
   // Term representation
 
-  var Term = /*#__PURE__*/(0, I.inherit)(function Term() {}, null, {
+  var Term = /*#__PURE__*/(0, I.inherit)(function Term() {}, Object, {
     toString: function toString() {
       return show(this);
     }
@@ -415,4 +415,4 @@
 
   Object.defineProperty(exports, '__esModule', { value: true });
 
-})));
+}));

@@ -13,8 +13,8 @@ const show = x =>
   I.isFunction(x)
     ? showFn(x)
     : I.isInstanceOf(Object, x) && I.constructorOf(x)
-      ? `${showFn(I.constructorOf(x))}${showParams(x)}`
-      : JSON.stringify(x)
+    ? `${showFn(I.constructorOf(x))}${showParams(x)}`
+    : JSON.stringify(x)
 
 // Computation queue
 
@@ -30,7 +30,7 @@ function Concat(prefix, suffix) {
 
 const Term = (process.env.NODE_ENV === 'production' ? fn => fn : I.inherit)(
   function Term() {},
-  null,
+  Object,
   {
     toString() {
       return show(this)

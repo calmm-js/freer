@@ -1,4 +1,4 @@
-import { resolve, isThenable, values, isFunction, constructorOf, inherit, curry, Monad, sndU, curryN, assocPartialU, id, always, arityN, defineNameU, isInstanceOfU } from 'infestines';
+import { defineNameU, curry, isInstanceOfU, inherit, isFunction, constructorOf, Monad, values, resolve, isThenable, curryN, assocPartialU, sndU, id, always, arityN } from 'infestines';
 
 var setNameU = process.env.NODE_ENV === 'production' ? function (fn) {
   return fn;
@@ -47,7 +47,7 @@ function Concat(prefix, suffix) {
 
 var Term = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? function (fn) {
   return fn;
-} : inherit)(function Term() {}, null, {
+} : inherit)(function Term() {}, Object, {
   toString: function toString() {
     return show(this);
   }

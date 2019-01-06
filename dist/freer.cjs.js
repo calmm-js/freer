@@ -51,7 +51,7 @@ function Concat(prefix, suffix) {
 
 var Term = /*#__PURE__*/(process.env.NODE_ENV === 'production' ? function (fn) {
   return fn;
-} : I.inherit)(function Term() {}, null, {
+} : I.inherit)(function Term() {}, Object, {
   toString: function toString() {
     return show(this);
   }
